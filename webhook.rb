@@ -8,6 +8,6 @@ get '/' do
 end
 
 post '/' do
-  pp JSON.parse(CGI.unescape(request.body.read))
+  pp JSON.parse(CGI.unescape(request.body.read.sub(/^payload=/, ''))
   'OK'
 end
