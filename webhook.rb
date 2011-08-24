@@ -1,6 +1,13 @@
 require 'sinatra'
 require 'json'
 require 'pp'
+require 'right_aws'
+
+AWS_ACCESS_KEY_ID = ENV['AWS_ACCESS_KEY_ID'] or raise 'AWS_ACCESS_KEY_ID missing!'
+AWS_SECRET_ACCESS_KEY = ENV['AWS_SECRET_ACCESS_KEY'] or raise 'AWS_SECRET_ACCESS_KEY missing!'
+CLOUDWATCH_NAMESPACE = ENV['CLOUDWATCH_NAMESPACE'] || 'Test'
+
+$acw = RightAws::AcwInterface.new(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
 
 get '/' do
   'This is a web hook!'
@@ -22,13 +29,22 @@ def handle_payload(payload)
   puts "Got #{events.size} events!"
   events.group_by do |event|
     message = event['message']
+    app = event['source_name'] || 'unknown'
     if message
-      message[/^Error (\w+)/, 1]
+      [app, message[/^Error (\w+)/, 1] || 'other']
     else
       puts 'WARNING: event has no message!'
       nil
     end
-  end.each do |error, events|
-    puts "Error #{error}: #{events.size} events."
+  end.each do |(app, error), events|
+    puts "#{app}: error #{error}: #{events.size} events."
+
+    $acw.put_metric_data({
+      :metric_name => "Heroku errors",
+      :namespace => CLOUDWATCH_NAMESPACE,
+      :dimensions => {:AppName => app, :ErrorCode => error},
+      :unit => :Count,
+      :value => events.size,
+    })
   end
 end

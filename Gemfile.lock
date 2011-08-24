@@ -1,8 +1,16 @@
+GIT
+  remote: git://github.com/rapportive-oss/right_aws.git
+  revision: 6b3ead71d1424da196eb5f251b49489541295264
+  specs:
+    right_aws (2.2.2)
+      right_http_connection (>= 1.2.5)
+
 GEM
   remote: http://rubygems.org/
   specs:
     json (1.5.1)
     rack (1.2.2)
+    right_http_connection (1.3.0)
     sinatra (1.2.1)
       rack (~> 1.1)
       tilt (>= 1.2.2, < 2.0)
@@ -14,4 +22,5 @@ PLATFORMS
 DEPENDENCIES
   json
   rack
+  right_aws!
   sinatra
