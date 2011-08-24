@@ -1,6 +1,6 @@
 require 'rubygems'
 require 'bundler/setup'
 
-require 'webhook'
+require './webhook'
 
 run Sinatra::Application
