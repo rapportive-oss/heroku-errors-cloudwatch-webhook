@@ -1,5 +1,4 @@
 require 'sinatra'
-require 'cgi'
 require 'json'
 require 'pp'
 
