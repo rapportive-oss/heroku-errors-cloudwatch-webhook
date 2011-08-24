@@ -8,6 +8,23 @@ get '/' do
 end
 
 post '/' do
-  pp JSON.parse(params[:payload])
+  handle_payload(JSON.parse(params[:payload]))
   'OK'
+end
+
+def handle_payload(payload)
+  events = payload.delete('events') or raise 'No events!'
+  pp payload
+  puts "Got #{events.size} events!"
+  events.group_by do |event|
+    message = event['message']
+    if message
+      message[/^Error (\w+)/, 1]
+    else
+      puts 'WARNING: event has no message!'
+      nil
+    end
+  end.each do |error, events|
+    puts "Error #{error}: #{events.size} events."
+  end
 end
