@@ -8,8 +8,9 @@ get '/' do
 end
 
 post '/' do
-  handle_payload(JSON.parse(params[:payload]))
-  'OK'
+  payload = JSON.parse(params[:payload])
+  #pp payload
+  handle_payload(payload)
 end
 
 def handle_payload(payload)
@@ -27,4 +28,8 @@ def handle_payload(payload)
   end.each do |error, events|
     puts "Error #{error}: #{events.size} events."
   end
+
+  'OK'
+rescue => e
+  [500, "#{e.class}: #{e}"]
 end
