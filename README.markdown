@@ -11,6 +11,14 @@ and graph the number of occurrences of each type of error over time.
 
 Tested under Ruby 1.9.2.
 
+You'll need to configure it with three environment variables:
+
+* **AWS_ACCESS_KEY_ID** - your AWS access key ID (20 characters starting with "AK")
+* **AWS_SECRET_ACCESS_KEY** - your AWS secret access key
+* **CLOUDWATCH_NAMESPACE** - namespace for the metrics, e.g. your company or product name (will default to "Test" if you omit this)
+
+If you don't like the idea of a little analytics app having access to your AWS account, I suggest using [AWS Identity and Access Management (IAM)](http://aws.amazon.com/iam/) to generate a restricted user with permissions only to access CloudWatch.
+
 
 ## Running locally
 
