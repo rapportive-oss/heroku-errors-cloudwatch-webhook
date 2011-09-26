@@ -75,7 +75,7 @@ def log_per_app_and_dyno(events)
     message = event['message']
     app = event['source_name'] || 'unknown'
     if message
-      [app, message[/ dyno=web\/(\d+) /, 1] || 'platform']
+      [app, message[/ dyno=web\.(\d+) /, 1] || 'platform']
     else
       puts 'WARNING: event has no message!'
       nil
