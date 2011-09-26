@@ -26,8 +26,25 @@ end
 def handle_payload(payload)
   events = payload.delete('events') or raise 'No events!'
   puts "Got #{events.size} events!"
+  log_per_app(events)
   log_per_app_and_error(events)
   log_per_app_and_dyno(events)
+end
+
+def log_per_app(events)
+  events.group_by do |event|
+    event['source_name'] || 'unknown'
+  end.each do |app, events|
+    puts "#{app}: #{events.size} events."
+
+    $acw.put_metric_data({
+      :metric_name => "Heroku errors",
+      :namespace => CLOUDWATCH_NAMESPACE,
+      :dimensions => {:AppName => app},
+      :unit => :Count,
+      :value => events.size,
+    })
+  end
 end
 
 def log_per_app_and_error(events)
