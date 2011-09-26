@@ -25,7 +25,6 @@ end
 
 def handle_payload(payload)
   events = payload.delete('events') or raise 'No events!'
-  pp payload
   puts "Got #{events.size} events!"
   log_per_app_and_error(events)
   log_per_app_and_dyno(events)
