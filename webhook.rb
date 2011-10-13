@@ -9,6 +9,10 @@ CLOUDWATCH_NAMESPACE = ENV['CLOUDWATCH_NAMESPACE'] || 'Test'
 
 $acw = RightAws::AcwInterface.new(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
 
+configure :production do
+  require 'newrelic_rpm'
+end
+
 get '/' do
   'This is a web hook!'
 end
