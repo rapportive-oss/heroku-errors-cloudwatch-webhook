@@ -1,1 +1,1 @@
-web: bundle exec ruby webhook.rb -p $PORT
+web: bundle exec ruby -Ilib lib/webhook.rb -p $PORT
