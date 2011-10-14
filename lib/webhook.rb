@@ -5,6 +5,8 @@ require 'right_aws'
 require 'analysis'
 include Analysis
 
+MAX_DATA_PER_CALL = (ENV['MAX_DATA_PER_CALL'] || 20).to_i
+
 AWS_ACCESS_KEY_ID = ENV['AWS_ACCESS_KEY_ID'] or raise 'AWS_ACCESS_KEY_ID missing!'
 AWS_SECRET_ACCESS_KEY = ENV['AWS_SECRET_ACCESS_KEY'] or raise 'AWS_SECRET_ACCESS_KEY missing!'
 CLOUDWATCH_NAMESPACE = ENV['CLOUDWATCH_NAMESPACE'] || 'Test'
@@ -47,12 +49,14 @@ def events_to_cloudwatch(metric_name, regex, dimension_groups, payload)
     dimensions[dimension] = {:match => group, :default => 'unknown'}
   end
 
-  data = grouped_counts(metric_name, events, regex, dimensions)
-
-  $acw.put_metric_data({
-    :namespace => CLOUDWATCH_NAMESPACE,
-    :data => data,
-  })
+  grouped_counts(metric_name, events, regex, dimensions).each_slice(MAX_DATA_PER_CALL) do |data|
+    # each_slice because Cloudwatch has a maximum number of data points it will
+    # accept per PutMetricData call
+    $acw.put_metric_data({
+      :namespace => CLOUDWATCH_NAMESPACE,
+      :data => data,
+    })
+  end
 end
 
 def grouped_counts(metric_name, events, *args)
