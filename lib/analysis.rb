@@ -1,4 +1,20 @@
 module Analysis
+  def group_by_all_dimensions(events, regex_or_dimension_declarations = nil, dimension_declarations_or_nil = nil)
+    if dimension_declarations_or_nil
+      regex = regex_or_dimension_declarations
+      dimension_declarations = dimension_declarations_or_nil
+    elsif regex_or_dimension_declarations.is_a? Regexp
+      regex = regex_or_dimension_declarations
+    else
+      dimension_declarations = regex_or_dimension_declarations
+    end
+    dimension_declarations ||= {}
+
+    prefixes(dimension_declarations).map do |dimension_declarations|
+      group_by_dimensions(events, regex, dimension_declarations)
+    end.inject({}, &:merge)
+  end
+
   def group_by_dimensions(events, *args)
     events.group_by do |event|
       event_dimensions(event, *args)
@@ -37,6 +53,10 @@ module Analysis
   end
 
   private
+  def prefixes(enumerable)
+    (0 .. enumerable.size).map {|n| enumerable.take(n) }
+  end
+
   def sanity_check_dimension_opts!(opts)
     raise ArgumentError, 'cannot specify both :property and :match' if opts.key?(:property) && opts.key?(:match)
     raise ArgumentError, 'must specify one of :property or :match' unless opts.key?(:property) || opts.key?(:match)

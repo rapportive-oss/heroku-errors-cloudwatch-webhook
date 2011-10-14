@@ -25,25 +25,45 @@ describe Analysis do
   end
 
 
-  describe 'counting events' do
+  describe 'grouping events' do
     def events
       [
-        {'source_name' => 'Alderaan'},
-        {'source_name' => 'Coruscant'},
-        {'source_name' => 'Alderaan'},
+        {'source_name' => 'Alderaan', 'exists' => true},
+        {'source_name' => 'Coruscant', 'exists' => true},
+        {'source_name' => 'Alderaan', 'exists' => false},
         {},
       ]
     end
 
-    it 'should group the events by the declared dimensions' do
-      grouped_events = group_by_dimensions(events,
-        :AppName => {:property => 'source_name', :default => 'unknown'})
-      grouped_events = Hash[*grouped_events.flatten]
+    describe :group_by_dimensions do
+      it 'should group the events by the declared dimensions' do
+        grouped_events = group_by_dimensions(events,
+          :AppName => {:property => 'source_name', :default => 'unknown'})
+        grouped_events = Hash[*grouped_events.flatten(1)]
 
-      grouped_events.should have(3).groups
-      grouped_events[{:AppName => 'Alderaan'}].should have(2).events
-      grouped_events[{:AppName => 'Coruscant'}].should have(1).event
-      grouped_events[{:AppName => 'unknown'}].should have(1).event
+        grouped_events.should have(3).groups
+        grouped_events[{:AppName => 'Alderaan'}].should have(2).events
+        grouped_events[{:AppName => 'Coruscant'}].should have(1).event
+        grouped_events[{:AppName => 'unknown'}].should have(1).event
+      end
+    end
+
+    describe :group_by_all_dimensions do
+      it 'should group the events by all declared dimensions in order' do
+        grouped_events = group_by_all_dimensions(events,
+          :AppName => {:property => 'source_name', :default => 'unknown'},
+          :Existence => {:property => 'exists'})
+        grouped_events = Hash[*grouped_events.flatten(1)]
+
+        grouped_events[{}].should have(4).events
+        grouped_events[{:AppName => 'Alderaan'}].should have(2).events
+        grouped_events[{:AppName => 'Coruscant'}].should have(1).event
+        grouped_events[{:AppName => 'unknown'}].should have(1).event
+        grouped_events[{:AppName => 'Alderaan', :Existence => true}].should have(1).event
+        grouped_events[{:AppName => 'Alderaan', :Existence => false}].should have(1).event
+        grouped_events[{:AppName => 'Coruscant', :Existence => true}].should have(1).event
+        grouped_events[{:AppName => 'unknown', :Existence => nil}].should have(1).event
+      end
     end
   end
 

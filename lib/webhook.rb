@@ -33,17 +33,10 @@ def handle_payload(payload)
   events = payload.delete('events') or raise 'No events!'
   puts "Got #{events.size} events!"
 
-  app_name_dimension = {:property => 'source_name', :default => 'unknown'}
-  data = [
-    grouped_counts('Heroku errors', events,
-                   :AppName => app_name_dimension),
-    grouped_counts('Heroku errors', events,
-                   /^Error (\w+)/,
-                   :AppName => app_name_dimension,
-                   :ErrorCode => {
-                     :match => 1,
-                     :default => 'unknown'}),
-  ].inject(&:+)
+  data = grouped_counts('Heroku errors', events,
+    /^Error (\w+)/,
+    :AppName => {:property => 'source_name', :default => 'unknown'},
+    :ErrorCode => {:match => 1, :default => 'unknown'})
 
   $acw.put_metric_data({
     :namespace => CLOUDWATCH_NAMESPACE,
@@ -52,7 +45,7 @@ def handle_payload(payload)
 end
 
 def grouped_counts(metric_name, events, *args)
-  group_by_dimensions(events, *args).map do |dimensions, events|
+  group_by_all_dimensions(events, *args).map do |dimensions, events|
     {
       :metric_name => metric_name,
       :dimensions => dimensions,
