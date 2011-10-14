@@ -26,20 +26,28 @@ get '/' do
   'This is a web hook!'
 end
 
-post '/' do
+post '/:metric_name' do |metric_name|
   payload = JSON.parse(params[:payload])
-  handle_payload(payload)
+  regex = Regexp.compile(params[:regex]) if params[:regex]
+  dimensions = params[:dimensions].map {|group, dimension| [group.to_i, dimension.to_sym] } if params[:dimensions]
+  events_to_cloudwatch(metric_name, regex, dimensions, payload)
   'OK'
 end
 
-def handle_payload(payload)
+def events_to_cloudwatch(metric_name, regex, dimension_groups, payload)
   events = payload.delete('events') or raise 'No events!'
   puts "Got #{events.size} events!"
 
-  data = grouped_counts('Heroku errors', events,
-    /^Error (\w+)/,
+  raise ArgumentError, "Can't have :dimensions with no :regex!" if dimension_groups && !regex
+
+  dimensions = {
     :AppName => {:property => 'source_name', :default => 'unknown'},
-    :ErrorCode => {:match => 1, :default => 'unknown'})
+  }
+  (dimension_groups || []).each do |group, dimension|
+    dimensions[dimension] = {:match => group, :default => 'unknown'}
+  end
+
+  data = grouped_counts(metric_name, events, regex, dimensions)
 
   $acw.put_metric_data({
     :namespace => CLOUDWATCH_NAMESPACE,
