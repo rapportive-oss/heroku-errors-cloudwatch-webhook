@@ -1,6 +1,5 @@
 require 'sinatra'
 require 'json'
-require 'pp'
 require 'right_aws'
 
 AWS_ACCESS_KEY_ID = ENV['AWS_ACCESS_KEY_ID'] or raise 'AWS_ACCESS_KEY_ID missing!'
