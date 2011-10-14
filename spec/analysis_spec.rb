@@ -49,7 +49,7 @@ describe Analysis do
     end
 
     describe :group_by_all_dimensions do
-      it 'should group the events by all declared dimensions in order' do
+      it 'should group the events by all declared dimensions' do
         grouped_events = group_by_all_dimensions(events,
           :AppName => {:property => 'source_name', :default => 'unknown'},
           :Existence => {:property => 'exists'})
@@ -59,6 +59,9 @@ describe Analysis do
         grouped_events[{:AppName => 'Alderaan'}].should have(2).events
         grouped_events[{:AppName => 'Coruscant'}].should have(1).event
         grouped_events[{:AppName => 'unknown'}].should have(1).event
+        grouped_events[{:Existence => true}].should have(2).events
+        grouped_events[{:Existence => false}].should have(1).event
+        grouped_events[{:Existence => nil}].should have(1).event
         grouped_events[{:AppName => 'Alderaan', :Existence => true}].should have(1).event
         grouped_events[{:AppName => 'Alderaan', :Existence => false}].should have(1).event
         grouped_events[{:AppName => 'Coruscant', :Existence => true}].should have(1).event

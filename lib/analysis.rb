@@ -10,7 +10,7 @@ module Analysis
     end
     dimension_declarations ||= {}
 
-    prefixes(dimension_declarations).map do |dimension_declarations|
+    all_combinations(dimension_declarations.to_a).map do |dimension_declarations|
       group_by_dimensions(events, regex, dimension_declarations)
     end.inject({}, &:merge)
   end
@@ -53,8 +53,8 @@ module Analysis
   end
 
   private
-  def prefixes(enumerable)
-    (0 .. enumerable.size).map {|n| enumerable.take(n) }
+  def all_combinations(array)
+    (0 .. array.size).flat_map {|n| array.combination(n).to_a }
   end
 
   def sanity_check_dimension_opts!(opts)
