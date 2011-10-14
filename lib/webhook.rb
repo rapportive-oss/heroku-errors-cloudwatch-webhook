@@ -31,7 +31,6 @@ def handle_payload(payload)
   puts "Got #{events.size} events!"
   log_per_app(events)
   log_per_app_and_error(events)
-  log_per_app_and_dyno(events)
 end
 
 def log_per_app(events)
@@ -67,29 +66,6 @@ def log_per_app_and_error(events)
       :metric_name => "Heroku errors",
       :namespace => CLOUDWATCH_NAMESPACE,
       :dimensions => {:AppName => app, :ErrorCode => error},
-      :unit => :Count,
-      :value => events.size,
-    })
-  end
-end
-
-def log_per_app_and_dyno(events)
-  events.group_by do |event|
-    message = event['message']
-    app = event['source_name'] || 'unknown'
-    if message
-      [app, message[/ dyno=web\.(\d+) /, 1] || 'platform']
-    else
-      puts 'WARNING: event has no message!'
-      nil
-    end
-  end.each do |(app, dyno), events|
-    puts "#{app}: dyno #{dyno}: #{events.size} events."
-
-    $acw.put_metric_data({
-      :metric_name => "Heroku errors",
-      :namespace => CLOUDWATCH_NAMESPACE,
-      :dimensions => {:AppName => app, :Dyno => dyno},
       :unit => :Count,
       :value => events.size,
     })
