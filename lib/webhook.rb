@@ -2,6 +2,9 @@ require 'sinatra'
 require 'json'
 require 'right_aws'
 
+require 'analysis'
+include Analysis
+
 AWS_ACCESS_KEY_ID = ENV['AWS_ACCESS_KEY_ID'] or raise 'AWS_ACCESS_KEY_ID missing!'
 AWS_SECRET_ACCESS_KEY = ENV['AWS_SECRET_ACCESS_KEY'] or raise 'AWS_SECRET_ACCESS_KEY missing!'
 CLOUDWATCH_NAMESPACE = ENV['CLOUDWATCH_NAMESPACE'] || 'Test'
@@ -29,45 +32,32 @@ end
 def handle_payload(payload)
   events = payload.delete('events') or raise 'No events!'
   puts "Got #{events.size} events!"
-  log_per_app(events)
-  log_per_app_and_error(events)
+
+  app_name_dimension = {:property => 'source_name', :default => 'unknown'}
+  data = [
+    grouped_counts('Heroku errors', events,
+                   :AppName => app_name_dimension),
+    grouped_counts('Heroku errors', events,
+                   /^Error (\w+)/,
+                   :AppName => app_name_dimension,
+                   :ErrorCode => {
+                     :match => 1,
+                     :default => 'unknown'}),
+  ].inject(&:+)
+
+  $acw.put_metric_data({
+    :namespace => CLOUDWATCH_NAMESPACE,
+    :data => data,
+  })
 end
 
-def log_per_app(events)
-  events.group_by do |event|
-    event['source_name'] || 'unknown'
-  end.each do |app, events|
-    puts "#{app}: #{events.size} events."
-
-    $acw.put_metric_data({
-      :metric_name => "Heroku errors",
-      :namespace => CLOUDWATCH_NAMESPACE,
-      :dimensions => {:AppName => app},
-      :unit => :Count,
+def grouped_counts(metric_name, events, *args)
+  group_by_dimensions(events, *args).map do |dimensions, events|
+    {
+      :metric_name => metric_name,
+      :dimensions => dimensions,
       :value => events.size,
-    })
-  end
-end
-
-def log_per_app_and_error(events)
-  events.group_by do |event|
-    message = event['message']
-    app = event['source_name'] || 'unknown'
-    if message
-      [app, message[/^Error (\w+)/, 1] || 'other']
-    else
-      puts 'WARNING: event has no message!'
-      nil
-    end
-  end.each do |(app, error), events|
-    puts "#{app}: error #{error}: #{events.size} events."
-
-    $acw.put_metric_data({
-      :metric_name => "Heroku errors",
-      :namespace => CLOUDWATCH_NAMESPACE,
-      :dimensions => {:AppName => app, :ErrorCode => error},
       :unit => :Count,
-      :value => events.size,
-    })
+    }
   end
 end
