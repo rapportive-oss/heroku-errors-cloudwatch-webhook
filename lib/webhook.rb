@@ -13,6 +13,13 @@ $acw = RightAws::AcwInterface.new(AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
 
 configure :production do
   require 'newrelic_rpm'
+  require 'airbrake'
+
+  Airbrake.configure do |config|
+    config.api_key = ENV['AIRBRAKE_API_KEY']
+  end
+  use Airbrake::Rack
+  enable :raise_errors
 end
 
 get '/' do
