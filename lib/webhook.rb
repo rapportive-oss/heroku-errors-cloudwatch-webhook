@@ -28,12 +28,8 @@ end
 
 post '/' do
   payload = JSON.parse(params[:payload])
-  begin
-    handle_payload(payload)
-    'OK'
-  rescue => e
-    [500, "#{e.class}: #{e}"]
-  end
+  handle_payload(payload)
+  'OK'
 end
 
 def handle_payload(payload)
