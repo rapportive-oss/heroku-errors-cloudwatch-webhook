@@ -30,7 +30,10 @@ end
 
 post '/:metric_name' do |metric_name|
   payload = JSON.parse(params[:payload])
-  regex = Regexp.compile(params[:regex]) if params[:regex]
+  if params[:regex]
+    regex = Regexp.compile(params[:regex])
+    puts "Regex: #{regex.inspect}"
+  end
   dimensions = params[:dimensions].map {|group, dimension| [group.to_i, dimension.to_sym] } if params[:dimensions]
   events_to_cloudwatch(metric_name, regex, dimensions, payload)
   'OK'
