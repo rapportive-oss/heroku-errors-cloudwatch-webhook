@@ -1,5 +1,11 @@
 # Monitor Heroku Errors in CloudWatch
 
+**XXX** this documentation is now very out of date!
+
+This branch generalises this hook to be a multipurpose log aggregator, configurable via an ornate URL scheme.
+
+**XXX** documentation below is probably misleading, read the code if you want to use it.
+
 This is a web hook designed to receive
 [Heroku platform errors](http://devcenter.heroku.com/articles/error-codes) from
 a logging service such as [Papertrail](https://papertrailapp.com) and log them
